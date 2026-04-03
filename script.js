@@ -19,6 +19,25 @@ const messages = [
 
 const workerUrl = 'https://lingering-dream-1922.javierbradlim321.workers.dev/';
 
+function escapeHtml(text) {
+  return text
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function renderLatestExchange(question, response) {
+  const safeQuestion = escapeHtml(question);
+  const safeResponse = escapeHtml(response);
+
+  chatWindow.innerHTML = `
+    <div class="msg user"><strong>You asked:</strong> ${safeQuestion}</div>
+    <div class="msg ai">${safeResponse}</div>
+  `;
+}
+
 /* Handle form submit */
 chatForm.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -31,7 +50,7 @@ chatForm.addEventListener('submit', async (event) => {
   messages.push({ role: 'user', content: prompt });
   console.log('Messages count after user push:', messages.length);
 
-  chatWindow.textContent = 'Processing...';
+  renderLatestExchange(prompt, 'Processing...');
 
   try {
     // Send a POST request to the OpenAI API
@@ -60,11 +79,11 @@ chatForm.addEventListener('submit', async (event) => {
     const content = result?.choices?.[0]?.message?.content || 'No response received.';
 
     messages.push({ role: 'assistant', content });
-    chatWindow.textContent = content;
+    renderLatestExchange(prompt, content);
   } catch (error) {
     // Remove the last user message if request fails so history stays consistent.
     messages.pop();
     console.error(`Error: ${error}`);
-    chatWindow.textContent = 'Something went wrong. Please try again.';
+    renderLatestExchange(prompt, 'Something went wrong. Please try again.');
   }
 });
